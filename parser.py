@@ -1,7 +1,10 @@
 import time
+from sqlite3 import IntegrityError
 
-from requests import Session
+from database import ReviewModel, Session
 from selenium.webdriver.support import expected_conditions as EC
+from sqlalchemy.orm import session
+
 from parser_class import Review
 
 import driver as driver
@@ -44,7 +47,8 @@ def parser_url():
             # Иначе он крутит страницу быстрее и появляються дубли отзывов
             view_more_button = driver.find_element(By.CLASS_NAME, 'tabs-select-view__title._name_reviews')
             print("Вторая кт " + view_more_button.text)
-            WebDriverWait(driver, 10).until_not(EC.presence_of_element_located((By.XPATH, '//*[@class="orgpage-reviews-view__loader"]')))
+            WebDriverWait(driver, 10).until_not(
+                EC.presence_of_element_located((By.XPATH, '//*[@class="orgpage-reviews-view__loader"]')))
             view_more_button.click()
 
         except NoSuchElementException:
@@ -67,14 +71,22 @@ def parser_url():
         except:
             print("Ну нет этой кнопки нуу нет !")
 
-
         reviews = driver.find_elements(By.XPATH, '//*[@class="business-review-view__info"]')
 
         for review in reviews:
             driver.execute_script("arguments[0].scrollIntoView(true);", review)
             new_review = Review(review).__dict__
+            # база данных подключается тут
+            """session = Session()
             #подвязать к бд!
+            new_review_model = ReviewModel(**new_review)
             print(new_review)
+            session.add(new_review_model)
+            try:
+                session.commit()
+            except IntegrityError as e:
+                print(e)
+            session.close()"""
 
 
 def search_elements():
